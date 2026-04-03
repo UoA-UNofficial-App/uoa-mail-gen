@@ -15,17 +15,18 @@
                 Generate a configuration profile for <strong>Mail</strong> and
                 <strong>Wi-Fi (ains-wifi)</strong>.
             </p>
-            <form action="/generate" method="POST" class="space-y-4">
+            
+            <form id="profileForm" class="space-y-4">
                 <div>
                     <label
-                        for="id"
+                        for="studentId"
                         class="block text-sm font-medium text-gray-700 mb-1"
                         >ID (e.g., s132xxxx)</label
                     >
                     <input
                         type="text"
-                        id="id"
-                        name="id"
+                        id="studentId"
+                        name="studentId"
                         required
                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="s1234567"
@@ -75,5 +76,55 @@
                 Wi-Fi settings. <br />Install it in your device settings.
             </p>
         </div>
+
+        <script>
+            document.getElementById('profileForm').addEventListener('submit', function(event) {
+                // デフォルトのフォーム送信（画面遷移）をストップ
+                event.preventDefault();
+
+                // 入力値の取得
+                const studentId = document.getElementById('studentId').value;
+                const displayName = document.getElementById('name').value;
+                const password = document.getElementById('password').value;
+
+                // ランダムなUUIDを生成する関数（プロファイルにはUUIDが必須のため）
+                const generateUUID = () => crypto.randomUUID().toUpperCase();
+
+                // 実際の .mobileconfig のXMLを構築（※ここは実際のAINSやMailの仕様に合わせてPayloadを書き換えてください）
+                const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        </array>
+    <key>PayloadDisplayName</key>
+    <string>U-Aizu Setup Profile</string>
+    <key>PayloadIdentifier</key>
+    <string>jp.ac.u-aizu.setup.${studentId}</string>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>${generateUUID()}</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>`;
+
+                // Blobを使ってファイルをダウンロードさせる
+                const blob = new Blob([xmlContent], { type: 'application/x-apple-aspen-config' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `UAizu_${studentId}.mobileconfig`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 後片付け
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        </script>
     </body>
 </html>
